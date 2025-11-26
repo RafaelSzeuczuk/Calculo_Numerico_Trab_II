@@ -70,11 +70,6 @@
                         <TextField fx:id="tfMaxIter" prefWidth="80" text="1000"/>
                     </HBox>
 
-                    <HBox spacing="6">
-                        <Label text="ω (Seidel):"/>
-                        <TextField fx:id="tfOmega" prefWidth="80" text="1.0"/>
-                    </HBox>
-
                     <CheckBox fx:id="cbShowSteps" text="Mostrar passo-a-passo"/>
 
                     <Separator/>

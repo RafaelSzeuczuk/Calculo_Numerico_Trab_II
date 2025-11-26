@@ -22,10 +22,6 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.Locale;
 
-/**
- * Controller para o Capítulo 3 - Sistemas Lineares.
- * Gera dinamicamente uma grade com A|b|x0.
- */
 public class Capitulo3Controller {
 
     @FXML private Spinner<Integer> spinnerN;
@@ -33,9 +29,7 @@ public class Capitulo3Controller {
     @FXML private GridPane gridMatrix;
     @FXML private TextField tfTolerance;
     @FXML private TextField tfMaxIter;
-    @FXML private TextField tfOmega;
     @FXML private CheckBox cbShowSteps;
-    @FXML private CheckBox cbAutoPermute;
     @FXML private TextArea taOutput;
 
     private TextField[][] matrixFields;
@@ -71,30 +65,22 @@ public class Capitulo3Controller {
     private void adaptarCamposParaMetodo(String metodo) {
         boolean isIterativo = metodo != null && (metodo.contains("Jacobi") || metodo.contains("Seidel"));
         boolean isCholesky = metodo != null && metodo.toLowerCase().contains("cholesky");
-        boolean isDireto = !isIterativo; // Métodos diretos não precisam de tolerância
+        boolean isDireto = !isIterativo;
 
-        // Habilita/desabilita campos baseado no tipo de método
         tfTolerance.setDisable(!isIterativo);
         tfMaxIter.setDisable(!isIterativo);
-        tfOmega.setDisable(!(metodo != null && metodo.contains("Seidel")));
 
-        // Define valores padrão para métodos não iterativos
         if (isDireto) {
-            tfTolerance.setText("0.0001"); // Valor padrão, mas não será usado
+            tfTolerance.setText("0.0001");
         } else {
-            tfTolerance.setText("0.0001"); // Valor padrão para iterativos
+            tfTolerance.setText("0.0001");
         }
 
-        // Bloquear campos x0 e b conforme o método
         if (vectorFields != null && x0Fields != null) {
             for (int i = 0; i < vectorFields.length; i++) {
-                // b é sempre necessário para todos os métodos
                 vectorFields[i].setDisable(false);
-
-                // x0 só é necessário para métodos iterativos
                 x0Fields[i].setDisable(!isIterativo);
 
-                // Estilo visual para indicar campos bloqueados
                 if (!isIterativo) {
                     x0Fields[i].setStyle("-fx-background-color: #f0f0f0; -fx-text-fill: #666666;");
                     x0Fields[i].setPromptText("Não usado");
@@ -105,7 +91,6 @@ public class Capitulo3Controller {
             }
         }
 
-        // show quick hints
         taOutput.appendText("Selecionado: " + metodo + "\n");
         if (isCholesky) taOutput.appendText("Cholesky: checa simetria e definicao positiva.\n");
         if (isIterativo) taOutput.appendText("Método iterativo: informe x⁰ (coluna à direita).\n");
@@ -128,7 +113,6 @@ public class Capitulo3Controller {
         vectorFields = new TextField[n];
         x0Fields = new TextField[n];
 
-        // cabeçalho
         for (int j = 0; j < n; j++) {
             Label lbl = new Label("a" + (1) + "," + (j + 1));
             GridPane.setConstraints(lbl, j, 0);
@@ -167,8 +151,6 @@ public class Capitulo3Controller {
         }
 
         gridMatrix.setMinWidth(Region.USE_PREF_SIZE);
-
-        // Aplicar o estado dos campos baseado no método atual
         adaptarCamposParaMetodo(choiceMetodo.getSelectionModel().getSelectedItem());
     }
 
@@ -181,7 +163,6 @@ public class Capitulo3Controller {
         for (int i = 0; i < matrixFields.length; i++) {
             for (int j = 0; j < matrixFields.length; j++) matrixFields[i][j].setText("0");
             vectorFields[i].setText("0");
-            // Só preenche x0 com zeros se for método iterativo
             if (isIterativo) {
                 x0Fields[i].setText("0");
             }
@@ -217,7 +198,6 @@ public class Capitulo3Controller {
         boolean isIterativo = metodo.contains("Jacobi") || metodo.contains("Seidel");
 
         for (int i = 0; i < n; i++) {
-            // Para métodos não iterativos, retorna vetor nulo
             if (!isIterativo) {
                 x0[i] = 0.0;
                 continue;
@@ -244,7 +224,6 @@ public class Capitulo3Controller {
         for (int i = 0; i < matrixFields.length; i++) {
             for (int j = 0; j < matrixFields.length; j++) matrixFields[i][j].clear();
             vectorFields[i].clear();
-            // Só limpa x0 se for método iterativo
             if (isIterativo) {
                 x0Fields[i].clear();
             }
@@ -261,16 +240,8 @@ public class Capitulo3Controller {
 
             boolean isIterativo = metodo.contains("Jacobi") || metodo.contains("Seidel");
 
-            // Para métodos iterativos, ler tolerância e maxIter
             double tol = isIterativo ? Double.parseDouble(tfTolerance.getText().trim()) : 0.0;
             int maxIter = isIterativo ? Integer.parseInt(tfMaxIter.getText().trim()) : 0;
-            double omega = 1.0;
-
-            if (metodo.contains("Seidel")) {
-                try {
-                    omega = Double.parseDouble(tfOmega.getText().trim());
-                } catch (Exception ignored) {}
-            }
 
             taOutput.clear();
             taOutput.appendText("Executando: " + metodo + "\n");
@@ -298,7 +269,7 @@ public class Capitulo3Controller {
                     result = Jacobi.resolver(A, b, tol, maxIter, cbShowSteps.isSelected(), x0);
                     break;
                 case "Gauss-Seidel (iterativo)":
-                    result = GaussSeidel.resolver(A, b, tol, maxIter, cbShowSteps.isSelected(), x0, omega);
+                    result = GaussSeidel.resolver(A, b, tol, maxIter, cbShowSteps.isSelected(), x0);
                     break;
                 default:
                     taOutput.appendText("Método não implementado.\n");
