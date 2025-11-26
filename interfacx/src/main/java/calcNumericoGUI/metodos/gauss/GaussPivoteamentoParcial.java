@@ -1,0 +1,244 @@
+package calcNumericoGUI.metodos.gauss;
+import calcNumericoGUI.metodos.UtilitariosMatriz;
+import calcNumericoGUI.metodos.ResultadoSolucao;
+import java.util.Locale;
+public class GaussPivoteamentoParcial {
+    public static ResultadoSolucao resolver(double[][] matrizA, double[] vetorB) {
+        ResultadoSolucao resultado = new ResultadoSolucao();
+        StringBuilder passos = new StringBuilder();
+        try {
+            if (!UtilitariosMatriz.verificarSistemaValido(matrizA, vetorB)) {
+                return ResultadoSolucao.criarErro("Sistema inválido: matriz não é quadrada ou vetor b tem tamanho incorreto");
+            }
+            int n = matrizA.length;
+            passos.append("=== ELIMINAÇÃO DE GAUSS COM PIVOTEAMENTO PARCIAL ===\n");
+            passos.append("Dimensão do sistema: ").append(n).append("x").append(n).append("\n\n");
+            if (UtilitariosMatriz.contemNaNouInfinito(matrizA) || UtilitariosMatriz.contemNaNouInfinito(vetorB)) {
+                return ResultadoSolucao.criarErro("Matriz ou vetor contém valores inválidos (NaN ou infinito)");
+            }
+            if (verificarMatrizSingular(matrizA)) {
+                passos.append(" Matriz potencialmente singular detectada\n");
+                passos.append("O sistema pode não ter solução única\n");
+                resultado.passos = passos.toString();
+                return ResultadoSolucao.criarErro("Matriz singular - sistema não tem solução única");
+            }
+            double[][] M = UtilitariosMatriz.copiarMatriz(matrizA);
+            double[] v = UtilitariosMatriz.copiarVetor(vetorB);
+            passos.append("Matriz inicial aumentada:\n");
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    passos.append(String.format("%10.6f ", M[i][j]));
+                }
+                passos.append("| ").append(String.format("%10.6f", v[i])).append("\n");
+            }
+            passos.append("\n");
+            for (int k = 0; k < n - 1; k++) {
+                passos.append("--- Etapa ").append(k + 1).append(" ---\n");
+                int linhaPivo = k;
+                double maxValor = Math.abs(M[k][k]);
+                passos.append(String.format("Procurando pivô na coluna %d:\n", k));
+                passos.append(String.format("  Linha %d: |%.6f| = %.6f\n", k, M[k][k], maxValor));
+                for (int i = k + 1; i < n; i++) {
+                    double valorAtual = Math.abs(M[i][k]);
+                    passos.append(String.format("  Linha %d: |%.6f| = %.6f", i, M[i][k], valorAtual));
+                    if (valorAtual > maxValor) {
+                        maxValor = valorAtual;
+                        linhaPivo = i;
+                        passos.append("  NOVO PIVÔ");
+                    }
+                    passos.append("\n");
+                }
+                passos.append(String.format("Pivô máximo: linha %d, valor = %.6f\n", linhaPivo, M[linhaPivo][k]));
+                if (Math.abs(maxValor) < 1e-12) {
+                    passos.append(" Todos os pivôs na coluna ").append(k).append(" são zero\n");
+                    passos.append("Isso indica que a matriz é singular (determinante = 0)\n");
+                    passos.append("O sistema pode não ter solução única\n");
+                    boolean todasLinhasIguais = true;
+                    for (int i = 1; i < n; i++) {
+                        for (int j = 0; j < n; j++) {
+                            if (Math.abs(matrizA[i][j] - matrizA[0][j]) > 1e-12) {
+                                todasLinhasIguais = false;
+                                break;
+                            }
+                        }
+                        if (!todasLinhasIguais) break;
+                    }
+                    if (todasLinhasIguais) {
+                        passos.append("  Matriz com todas as linhas iguais - sistema indeterminado\n");
+                    }
+                    boolean bCompativel = true;
+                    for (int i = 1; i < n; i++) {
+                        if (Math.abs(vetorB[i] - vetorB[0]) > 1e-12) {
+                            bCompativel = false;
+                            break;
+                        }
+                    }
+                    if (todasLinhasIguais && !bCompativel) {
+                        passos.append(" Sistema incompatível - não existe solução\n");
+                    } else if (todasLinhasIguais && bCompativel) {
+                        passos.append("  Sistema indeterminado - infinitas soluções\n");
+                    }
+                    resultado.passos = passos.toString();
+                    return ResultadoSolucao.criarErro("Matriz singular - sistema não tem solução única");
+                }
+                if (linhaPivo != k) {
+                    passos.append(String.format("Trocando linha %d com linha %d\n", k, linhaPivo));
+                    double[] tempLinha = M[k];
+                    M[k] = M[linhaPivo];
+                    M[linhaPivo] = tempLinha;
+                    double tempVetor = v[k];
+                    v[k] = v[linhaPivo];
+                    v[linhaPivo] = tempVetor;
+                    passos.append("Matriz após troca de linhas:\n");
+                    for (int i = 0; i < n; i++) {
+                        for (int j = 0; j < n; j++) {
+                            passos.append(String.format("%10.6f ", M[i][j]));
+                        }
+                        passos.append("| ").append(String.format("%10.6f", v[i])).append("\n");
+                    }
+                }
+                passos.append("\nEliminação:\n");
+                for (int i = k + 1; i < n; i++) {
+                    if (Math.abs(M[k][k]) < 1e-12) {
+                        passos.append(" Pivô zero após troca - sistema singular\n");
+                        resultado.passos = passos.toString();
+                        return ResultadoSolucao.criarErro("Sistema singular - pivô zero após pivoteamento");
+                    }
+                    double multiplicador = M[i][k] / M[k][k];
+                    passos.append(String.format("m[%d][%d] = %.6f / %.6f = %.6f\n", i, k, M[i][k], M[k][k], multiplicador));
+                    if (Math.abs(multiplicador) > 1e6) {
+                        passos.append("  Multiplicador muito grande - possível instabilidade\n");
+                    }
+                    for (int j = k; j < n; j++) {
+                        double valorAntigo = M[i][j];
+                        M[i][j] -= multiplicador * M[k][j];
+                        passos.append(String.format("  M[%d][%d] = %.6f - %.6f * %.6f = %.6f\n",
+                                i, j, valorAntigo, multiplicador, M[k][j], M[i][j]));
+                    }
+                    double valorAntigoV = v[i];
+                    v[i] -= multiplicador * v[k];
+                    passos.append(String.format("  v[%d] = %.6f - %.6f * %.6f = %.6f\n",
+                            i, valorAntigoV, multiplicador, v[k], v[i]));
+                }
+                passos.append("Matriz após eliminação:\n");
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < n; j++) {
+                        passos.append(String.format("%10.6f ", M[i][j]));
+                    }
+                    passos.append("| ").append(String.format("%10.6f", v[i])).append("\n");
+                }
+                passos.append("\n");
+            }
+            passos.append("Verificando último pivô: M[").append(n-1).append("][").append(n-1).append("] = ")
+                    .append(String.format("%.6f", M[n-1][n-1])).append("\n");
+            if (Math.abs(M[n-1][n-1]) < 1e-12) {
+                passos.append(" Último pivô nulo - sistema singular\n");
+                resultado.passos = passos.toString();
+                return ResultadoSolucao.criarErro("Sistema singular - último pivô é zero");
+            }
+            passos.append("\n=== SUBSTITUIÇÃO REVERSA ===\n");
+            double[] x = new double[n];
+            for (int i = n - 1; i >= 0; i--) {
+                double soma = v[i];
+                passos.append(String.format("x[%d]: soma inicial = %.6f", i, soma));
+                for (int j = i + 1; j < n; j++) {
+                    passos.append(String.format(" - (%.6f * %.6f)", M[i][j], x[j]));
+                    soma -= M[i][j] * x[j];
+                }
+                passos.append(String.format(" = %.6f\n", soma));
+                if (Math.abs(M[i][i]) < 1e-12) {
+                    passos.append(" Divisão por zero em x[").append(i).append("]\n");
+                    resultado.passos = passos.toString();
+                    return ResultadoSolucao.criarErro("Divisão por zero na substituição reversa");
+                }
+                x[i] = soma / M[i][i];
+                passos.append(String.format("x[%d] = %.6f / %.6f = %.6f\n\n", i, soma, M[i][i], x[i]));
+            }
+            if (UtilitariosMatriz.contemNaNouInfinito(x)) {
+                passos.append(" Solução contém valores inválidos\n");
+                resultado.passos = passos.toString();
+                return ResultadoSolucao.criarErro("Solução contém valores NaN ou infinito");
+            }
+            double[] residuo = UtilitariosMatriz.subtrairVetores(
+                    multiplicarMatrizVetor(matrizA, x), vetorB);
+            double normaResiduo = UtilitariosMatriz.normaInfinita(residuo);
+            passos.append(" Sistema resolvido com sucesso!\n");
+            passos.append("Solução final:\n").append(UtilitariosMatriz.vetorParaString(x));
+            passos.append(String.format("Norma do resíduo: %.2e\n", normaResiduo));
+            if (normaResiduo > 1e-6) {
+                passos.append("  Resíduo relativamente alto - verifique a precisão\n");
+            }
+            resultado.solucao = x;
+            resultado.mensagem = "Eliminação de Gauss com pivoteamento parcial concluída com sucesso";
+            resultado.passos = passos.toString();
+            return resultado;
+        } catch (Exception e) {
+            resultado.passos = passos.toString();
+            return ResultadoSolucao.criarErro("Erro durante eliminação de Gauss com pivoteamento parcial: " + e.getMessage());
+        }
+    }
+    private static boolean verificarDiagonalDominante(double[][] A) {
+        int n = A.length;
+        for (int i = 0; i < n; i++) {
+            double soma = 0.0;
+            for (int j = 0; j < n; j++) {
+                if (j != i) {
+                    soma += Math.abs(A[i][j]);
+                }
+            }
+            if (Math.abs(A[i][i]) <= soma) {
+                return false;
+            }
+        }
+        return true;
+    }
+    private static boolean verificarMatrizSingular(double[][] A) {
+        int n = A.length;
+        boolean todasLinhasIguais = true;
+        for (int i = 1; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (Math.abs(A[i][j] - A[0][j]) > 1e-12) {
+                    todasLinhasIguais = false;
+                    break;
+                }
+            }
+            if (!todasLinhasIguais) break;
+        }
+        if (todasLinhasIguais) return true;
+        boolean todasColunasIguais = true;
+        for (int j = 1; j < n; j++) {
+            for (int i = 0; i < n; i++) {
+                if (Math.abs(A[i][j] - A[i][0]) > 1e-12) {
+                    todasColunasIguais = false;
+                    break;
+                }
+            }
+            if (!todasColunasIguais) break;
+        }
+        if (todasColunasIguais) return true;
+        boolean matrizNula = true;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (Math.abs(A[i][j]) > 1e-12) {
+                    matrizNula = false;
+                    break;
+                }
+            }
+            if (!matrizNula) break;
+        }
+        if (matrizNula) return true;
+        return false;
+    }
+    private static double[] multiplicarMatrizVetor(double[][] A, double[] x) {
+        int n = A.length;
+        double[] resultado = new double[n];
+        for (int i = 0; i < n; i++) {
+            double soma = 0.0;
+            for (int j = 0; j < n; j++) {
+                soma += A[i][j] * x[j];
+            }
+            resultado[i] = soma;
+        }
+        return resultado;
+    }
+}

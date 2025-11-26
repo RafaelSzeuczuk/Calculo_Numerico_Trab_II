@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="calcNumericoGUI.controllers.Capitulo3Controller"
+            prefWidth="1200" prefHeight="800">
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+
+            <Button text="Voltar" onAction="#voltar" />
+            <Label text="Capítulo 3 - Sistemas Lineares"
+                   style="-fx-font-size:18px; -fx-font-weight:bold;" />
+        </HBox>
+    </top>
+
+    <center>
+        <VBox spacing="12">
+            <padding>
+                <Insets top="12" right="12" bottom="12" left="12"/>
+            </padding>
+
+            <HBox spacing="25">
+
+                <!-- PAINEL ESQUERDO -->
+                <VBox spacing="10" prefWidth="350">
+
+                    <Label text="Escolha o método:"/>
+                    <ChoiceBox fx:id="choiceMetodo" prefWidth="300">
+                        <items>
+                            <FXCollections fx:factory="observableArrayList">
+                                <String fx:value="Eliminação de Gauss (sem pivoteamento)"/>
+                                <String fx:value="Gauss com pivoteamento parcial"/>
+                                <String fx:value="Gauss com pivoteamento completo"/>
+                                <String fx:value="Fatoração LU (Doolittle)"/>
+                                <String fx:value="Fatoração de Cholesky"/>
+                                <String fx:value="Gauss-Jacobi (iterativo)"/>
+                                <String fx:value="Gauss-Seidel (iterativo)"/>
+                            </FXCollections>
+                        </items>
+                    </ChoiceBox>
+
+                    <Label text="Tamanho da matriz (n):"/>
+                    <Spinner fx:id="spinnerN" editable="true" prefWidth="120"/>
+
+                    <HBox spacing="10">
+                        <Button text="Gerar Tabela" onAction="#gerarGrade"/>
+                        <Button text="Zeros" onAction="#preencherZeros"/>
+                    </HBox>
+
+                    <Separator/>
+
+                    <Label text="Parâmetros Iterativos:"/>
+
+                    <HBox spacing="6">
+                        <Label text="Tolerância:"/>
+                        <TextField fx:id="tfTolerance" prefWidth="100" text="1e-6"/>
+                    </HBox>
+
+                    <HBox spacing="6">
+                        <Label text="Max Iter:"/>
+                        <TextField fx:id="tfMaxIter" prefWidth="80" text="1000"/>
+                    </HBox>
+
+                    <HBox spacing="6">
+                        <Label text="ω (Seidel):"/>
+                        <TextField fx:id="tfOmega" prefWidth="80" text="1.0"/>
+                    </HBox>
+
+                    <CheckBox fx:id="cbShowSteps" text="Mostrar passo-a-passo"/>
+
+                    <Separator/>
+
+                    <Button text="Resolver" onAction="#executarMetodo" prefWidth="200"/>
+                    <Button text="Limpar Tudo" onAction="#limparTudo" prefWidth="200"/>
+
+                </VBox>
+
+                <!-- PAINEL DIREITO -->
+                <VBox spacing="10" prefWidth="800">
+
+                    <Label text="Matriz A, vetor b e vetor inicial x⁰:"/>
+
+                    <ScrollPane prefWidth="800" prefHeight="500">
+                        <GridPane fx:id="gridMatrix"
+                                  hgap="6" vgap="6">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                        </GridPane>
+                    </ScrollPane>
+
+                </VBox>
+
+            </HBox>
+
+            <Separator/>
+
+            <Label text="Saída / Relatório:" />
+
+            <TextArea fx:id="taOutput"
+                      prefHeight="250"
+                      wrapText="false"
+                      style="-fx-font-family: 'monospace'; -fx-font-size:12px;"/>
+
+        </VBox>
+    </center>
+
+</BorderPane>
