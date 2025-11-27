@@ -15,7 +15,7 @@ public class GaussSeidel {
 
         try {
             if (!UtilitariosMatriz.verificarSistemaValido(matrizA, vetorB)) {
-                return ResultadoSolucao.criarErro("Sistema inválido: matriz não é quadrada ou vetor b tem tamanho incorreto");
+                return ResultadoSolucao.criarErro("Sistema invalido: matriz nao e quadrada ou vetor b tem tamanho incorreto");
             }
 
             int n = matrizA.length;
@@ -38,6 +38,11 @@ public class GaussSeidel {
             double[][] A = UtilitariosMatriz.copiarMatriz(matrizA);
             double[] b = UtilitariosMatriz.copiarVetor(vetorB);
             double[] x;
+
+            passos.append("Aplicando metodo Sanserfild para permutacao de linhas...\n");
+            aplicarSanserfild(A, b);
+            passos.append("Matriz apos Sanserfild:\n").append(UtilitariosMatriz.matrizParaString(A));
+            passos.append("Vetor b apos Sanserfild: ").append(UtilitariosMatriz.vetorParaString(b)).append("\n\n");
 
             if (chuteInicial != null && chuteInicial.length == n) {
                 x = UtilitariosMatriz.copiarVetor(chuteInicial);
@@ -62,8 +67,8 @@ public class GaussSeidel {
                     }
 
                     if (Math.abs(A[i][i]) < 1e-15) {
-                        passos.append("ERRO: Elemento diagonal nulo na linha ").append(i).append("\n");
-                        return ResultadoSolucao.criarErro("Elemento diagonal A[" + i + "][" + i + "] e zero");
+                        passos.append("ERRO: Elemento diagonal nulo na linha ").append(i).append(" apos Sanserfild\n");
+                        return ResultadoSolucao.criarErro("Elemento diagonal A[" + i + "][" + i + "] e zero apos permutacoes");
                     }
 
                     x[i] = soma / A[i][i];
@@ -128,6 +133,32 @@ public class GaussSeidel {
         } catch (Exception e) {
             resultado.passos = passos.toString();
             return ResultadoSolucao.criarErro("Erro durante metodo de Gauss-Seidel: " + e.getMessage());
+        }
+    }
+
+    private static void aplicarSanserfild(double[][] A, double[] b) {
+        int n = A.length;
+
+        for (int i = 0; i < n; i++) {
+            double maxVal = Math.abs(A[i][i]);
+            int maxRow = i;
+
+            for (int j = i + 1; j < n; j++) {
+                if (Math.abs(A[j][i]) > maxVal) {
+                    maxVal = Math.abs(A[j][i]);
+                    maxRow = j;
+                }
+            }
+
+            if (maxRow != i) {
+                double[] tempA = A[i];
+                A[i] = A[maxRow];
+                A[maxRow] = tempA;
+
+                double tempB = b[i];
+                b[i] = b[maxRow];
+                b[maxRow] = tempB;
+            }
         }
     }
 
